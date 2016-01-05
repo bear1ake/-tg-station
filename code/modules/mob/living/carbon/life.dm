@@ -56,7 +56,8 @@
 	else
 		//Breathe from internal
 		breath = get_breath_from_internal(BREATH_VOLUME)
-		internal = 1
+		if(breath)
+			internal = 1
 
 		if(!breath)
 
