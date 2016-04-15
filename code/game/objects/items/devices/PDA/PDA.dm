@@ -544,6 +544,7 @@ var/global/list/obj/item/device/pda/PDAs = list()
 
 /obj/item/device/pda/proc/msg_input(mob/living/U = usr)
 	var/t = stripped_input(U, "Please enter message", name, null, MAX_MESSAGE_LEN)
+	t = sanitize_a0(t)
 	if (!t || toff)
 		return
 	if (!in_range(src, U) && loc != U)

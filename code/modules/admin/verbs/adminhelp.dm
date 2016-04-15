@@ -1,8 +1,4 @@
 /proc/keywords_lookup(msg)
-
-	//This is a list of words which are ignored by the parser when comparing message contents for names. MUST BE IN LOWER CASE!
-	var/list/adminhelp_ignored_words = list("unknown","the","a","an","of","monkey","alien","as", "i")
-
 	//explode the input msg into a list
 	var/list/msglist = splittext(msg, " ")
 
@@ -39,25 +35,24 @@
 	for(var/original_word in msglist)
 		var/word = ckey(original_word)
 		if(word)
-			if(!(word in adminhelp_ignored_words))
-				if(word == "ai")
-					ai_found = 1
-				else
-					var/mob/found = ckeys[word]
+			if(word == "ai")
+				ai_found = 1
+			else
+				var/mob/found = ckeys[word]
+				if(!found)
+					found = surnames[word]
 					if(!found)
-						found = surnames[word]
-						if(!found)
-							found = forenames[word]
-					if(found)
-						if(!(found in mobs_found))
-							mobs_found += found
-							if(!ai_found && isAI(found))
-								ai_found = 1
-							var/is_antag = 0
-							if(found.mind && found.mind.special_role)
-								is_antag = 1
-							msg += "[original_word]<font size='1' color='[is_antag ? "red" : "black"]'>(<A HREF='?_src_=holder;adminmoreinfo=\ref[found]'>?</A>|<A HREF='?_src_=holder;adminplayerobservefollow=\ref[found]'>F</A>)</font> "
-							continue
+						found = forenames[word]
+				if(found)
+					if(!(found in mobs_found))
+						mobs_found += found
+						if(!ai_found && isAI(found))
+							ai_found = 1
+						var/is_antag = 0
+						if(found.mind && found.mind.special_role)
+							is_antag = 1
+						msg += "[original_word]<font size='1' color='[is_antag ? "red" : "black"]'>(<A HREF='?_src_=holder;adminmoreinfo=\ref[found]'>?</A>|<A HREF='?_src_=holder;adminplayerobservefollow=\ref[found]'>F</A>)</font> "
+						continue
 		msg += "[original_word] "
 	return msg
 

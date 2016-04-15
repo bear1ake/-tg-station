@@ -11,7 +11,7 @@
 	if(stat == DEAD)
 		return
 
-
+	message = sanitize_a0(message)
 	message = trim(html_encode(message))
 	if(!can_speak(message))
 		return

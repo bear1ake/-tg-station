@@ -47,6 +47,7 @@
 			//testing("Active turf found. Return value of compare(): [is_active]")
 			if(!excited) //make sure we aren't already excited
 				excited = 1
+				maptext = "ACTIVE"
 				SSair.active_turfs |= src
 
 

@@ -297,6 +297,7 @@
 		T.excited = 0
 		T.recently_active = 0
 		T.excited_group = null
+		T.maptext = null
 		SSair.active_turfs -= T
 	garbage_collect()
 

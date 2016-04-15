@@ -118,7 +118,7 @@
 			//var/recipient = "Unspecified" //name of the person
 			//var/sender = "Unspecified" //name of the sender
 			//var/message = "Blank" //transferred message
-			dat += "<center><A href='?src=\ref[src];back=1'>Back</a> - <A href='?src=\ref[src];refresh=1'>Refresh</center><hr>"
+			dat += "<center><A href='?src=\ref[src];back=1'>Back</a> - <A href='?src=\ref[src];refresh=1'>Refresh</center></a><hr>"
 			dat += "<table border='1' width='100%'><tr><th width = '5%'>X</th><th width='15%'>Sender</th><th width='15%'>Recipient</th><th width='300px' word-wrap: break-word>Message</th></tr>"
 			for(var/datum/data_pda_msg/pda in src.linkedServer.pda_msgs)
 				index++
@@ -126,7 +126,8 @@
 					break
 				// Del - Sender   - Recepient - Message
 				// X   - Al Green - Your Mom  - WHAT UP!?
-				dat += "<tr><td width = '5%'><center><A href='?src=\ref[src];delete=\ref[pda]' style='color: rgb(255,0,0)'>X</a></center></td><td width='15%'>[pda.sender]</td><td width='15%'>[pda.recipient]</td><td width='300px'>[pda.message][pda.photo ? "<a href='byond://?src=\ref[pda];photo=1'>(Photo)</a>":""]</td></tr>"
+				var/message_u = copytext(sanitize_a2u(pda.message), 1, MAX_MESSAGE_LEN)
+				dat += "<tr><td width = '5%'><center><A href='?src=\ref[src];delete=\ref[pda]' style='color: rgb(255,0,0)'>X</a></center></td><td width='15%'>[pda.sender]</td><td width='15%'>[pda.recipient]</td><td width='300px'>[message_u][pda.photo ? "<a href='byond://?src=\ref[pda];photo=1'>(Photo)</a>":""]</td></tr>"
 			dat += "</table>"
 		//Hacking screen.
 		if(2)

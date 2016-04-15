@@ -36,8 +36,8 @@
 			index = findtext(t, char)
 	return t
 
-//Removes a few problematic characters
-/proc/sanitize_simple(t,list/repl_chars = list("\n"="#","\t"="#"))
+//Removes a ÿ (cp1251)
+/proc/sanitize_simple(t,list/repl_chars = list("ÿ"="____255_"))
 	for(var/char in repl_chars)
 		var/index = findtext(t, char)
 		while(index)
@@ -47,7 +47,9 @@
 
 //Runs byond's sanitization proc along-side sanitize_simple
 /proc/sanitize(t,list/repl_chars = null)
-	return html_encode(sanitize_simple(t,repl_chars))
+	t = html_encode(trim(sanitize_simple(t, repl_chars)))
+	t = replacetext(t, "____255_", "&#255;")//cp1251
+	return t
 
 //Runs sanitize and strip_html_simple
 //I believe strip_html_simple() is required to run first to prevent '<' from displaying as '&lt;' after sanitize() calls byond's html_encode()
@@ -69,8 +71,6 @@
 		switch(text2ascii(text,i))
 			if(62,60,92,47)
 				return			//rejects the text if it contains these bad characters: <, >, \ or /
-			if(127 to 255)
-				return			//rejects weird letters like ï¿½
 			if(0 to 31)
 				return			//more weird stuff
 			if(32)
@@ -83,12 +83,18 @@
 // Used to get a properly sanitized input, of max_length
 /proc/stripped_input(mob/user, message = "", title = "", default = "", max_length=MAX_MESSAGE_LEN)
 	var/name = input(user, message, title, default) as text|null
-	return trim(html_encode(name), max_length) //trim is "outside" because html_encode can expand single symbols into multiple symbols (such as turning < into &lt;)
+	name = replacetext(name, "ÿ", "___255_")
+	name = trim(html_encode(name), max_length) //trim is "outside" because html_encode can expand single symbols into multiple symbols (such as turning < into &lt;)
+	name = replacetext(name, "___255_", "ÿ")
+	return name
 
 // Used to get a properly sanitized multiline input, of max_length
 /proc/stripped_multiline_input(mob/user, message = "", title = "", default = "", max_length=MAX_MESSAGE_LEN)
 	var/name = input(user, message, title, default) as message|null
-	return html_encode(trim(name, max_length))
+	name = replacetext(name, "ÿ", "___255_")
+	name = html_encode(trim(name, max_length)) //trim is "inside" because html_encode can expand single symbols into multiple symbols (such as turning < into &lt;)
+	name = replacetext(name, "___255_", "ÿ")
+	return name
 
 //Filters out undesirable characters from names
 /proc/reject_bad_name(t_in, allow_numbers=0, max_length=MAX_NAME_LEN)
@@ -418,7 +424,131 @@ var/list/binary = list("0","1")
 	t = replacetext(t, "\[/small\]", "</font>")
 	t = replacetext(t, "\[list\]", "<ul>")
 	t = replacetext(t, "\[/list\]", "</ul>")
+	t = replacetext(t, "ÿ", "&#1103;")
 
+	return t
+
+//latin sanitization for some reasons
+/proc/sanitize_o(t,list/repl_chars = null)
+	t = html_encode(trim(sanitize_simple_o(t, repl_chars)))
+	return t
+
+/proc/sanitize_simple_o(t,list/repl_chars = list("\n"="#","\t"="#"))
+	for(var/char in repl_chars)
+		var/index = findtext(t, char)
+		while(index)
+			t = copytext(t, 1, index) + repl_chars[char] + copytext(t, index+1)
+			index = findtext(t, char, index+1)
+	return t
+
+//unicode sanitization
+/proc/sanitize_u(t,list/repl_chars = null)
+	t = html_encode(sanitize_simple(t,repl_chars))
+	t = replacetext(t, "____255_", "&#1103;")
+	return t
+
+//convertion cp1251 to unicode
+/proc/sanitize_a2u(t)
+	t = replacetext(t, "&#255;", "&#1103;")
+	return t
+
+//convertion unicode to cp1251
+/proc/sanitize_u2a(t)
+	t = replacetext(t, "&#1103;", "&#255;")
+	return t
+
+//clean sanitize cp1251
+/proc/sanitize_a0(t)
+	t = replacetext(t, "ÿ", "&#255;")
+	return t
+
+//clean sanitize unicode
+/proc/sanitize_u0(t)
+	t = replacetext(t, "ÿ", "&#1103;")
+	return t
+
+/proc/remore_cyrillic(t)
+	var/list/symbols = list("à", "á", "â", "ã", "ä", "å", "¸", "æ", "ç", "è", "é", "ê", "ë", "ì", \
+	"í", "î", "ï", "ð", "ñ", "ò", "ó", "ô", "õ", "ö", "÷", "ø", "ù", "ü", "û", "ú", "ý", "þ", "ÿ", \
+	"À", "Á", "Â", "Ã", "Ä", "Å", "¨", "Æ", "Ç", "È", "É", "Ê", "Ë", "Ì", "Í", "Î", "Ï", \
+	"Ð", "Ñ", "Ò", "Ó", "Ô", "Õ", "Ö", "×", "Ø", "Ù", "Ü", "Û", "Ú", "Ý", "Þ", "ß")
+	for(var/i in symbols)
+		t = replacetext(t, i, "")
+	return t
+
+/proc/extA2U(t)
+	//¨, ¸
+	t = replacetextEx(t, "\\xa8", "\\u0401")
+	t = replacetextEx(t, "\\xb8", "\\u0451")
+	//À-Ï
+	t = replacetextEx(t, "\\xc0", "\\u0410")
+	t = replacetextEx(t, "\\xc1", "\\u0411")
+	t = replacetextEx(t, "\\xc2", "\\u0412")
+	t = replacetextEx(t, "\\xc3", "\\u0413")
+	t = replacetextEx(t, "\\xc4", "\\u0414")
+	t = replacetextEx(t, "\\xc5", "\\u0415")
+	t = replacetextEx(t, "\\xc6", "\\u0416")
+	t = replacetextEx(t, "\\xc7", "\\u0417")
+	t = replacetextEx(t, "\\xc8", "\\u0418")
+	t = replacetextEx(t, "\\xc9", "\\u0419")
+	t = replacetextEx(t, "\\xca", "\\u041a")
+	t = replacetextEx(t, "\\xcb", "\\u041b")
+	t = replacetextEx(t, "\\xcc", "\\u041c")
+	t = replacetextEx(t, "\\xcd", "\\u041d")
+	t = replacetextEx(t, "\\xce", "\\u041e")
+	t = replacetextEx(t, "\\xcf", "\\u041f")
+	//Ð-ß
+	t = replacetextEx(t, "\\xd0", "\\u0420")
+	t = replacetextEx(t, "\\xd1", "\\u0421")
+	t = replacetextEx(t, "\\xd2", "\\u0422")
+	t = replacetextEx(t, "\\xd3", "\\u0423")
+	t = replacetextEx(t, "\\xd4", "\\u0424")
+	t = replacetextEx(t, "\\xd5", "\\u0425")
+	t = replacetextEx(t, "\\xd6", "\\u0426")
+	t = replacetextEx(t, "\\xd7", "\\u0427")
+	t = replacetextEx(t, "\\xd8", "\\u0428")
+	t = replacetextEx(t, "\\xd9", "\\u0429")
+	t = replacetextEx(t, "\\xda", "\\u042a")
+	t = replacetextEx(t, "\\xdb", "\\u042b")
+	t = replacetextEx(t, "\\xdc", "\\u042c")
+	t = replacetextEx(t, "\\xdd", "\\u042d")
+	t = replacetextEx(t, "\\xde", "\\u042e")
+	t = replacetextEx(t, "\\xdf", "\\u042f")
+	//à-ï
+	t = replacetextEx(t, "\\xe0", "\\u0430")
+	t = replacetextEx(t, "\\xe1", "\\u0431")
+	t = replacetextEx(t, "\\xe2", "\\u0432")
+	t = replacetextEx(t, "\\xe3", "\\u0433")
+	t = replacetextEx(t, "\\xe4", "\\u0434")
+	t = replacetextEx(t, "\\xe5", "\\u0435")
+	t = replacetextEx(t, "\\xe6", "\\u0436")
+	t = replacetextEx(t, "\\xe7", "\\u0437")
+	t = replacetextEx(t, "\\xe8", "\\u0438")
+	t = replacetextEx(t, "\\xe9", "\\u0439")
+	t = replacetextEx(t, "\\xea", "\\u043a")
+	t = replacetextEx(t, "\\xeb", "\\u043b")
+	t = replacetextEx(t, "\\xec", "\\u043c")
+	t = replacetextEx(t, "\\xed", "\\u043d")
+	t = replacetextEx(t, "\\xee", "\\u043e")
+	t = replacetextEx(t, "\\xef", "\\u043f")
+	//ð-ÿ
+	t = replacetextEx(t, "\\xf0", "\\u0440")
+	t = replacetextEx(t, "\\xf1", "\\u0441")
+	t = replacetextEx(t, "\\xf2", "\\u0442")
+	t = replacetextEx(t, "\\xf3", "\\u0443")
+	t = replacetextEx(t, "\\xf4", "\\u0444")
+	t = replacetextEx(t, "\\xf5", "\\u0445")
+	t = replacetextEx(t, "\\xf6", "\\u0446")
+	t = replacetextEx(t, "\\xf7", "\\u0447")
+	t = replacetextEx(t, "\\xf8", "\\u0448")
+	t = replacetextEx(t, "\\xf9", "\\u0449")
+	t = replacetextEx(t, "\\xfa", "\\u044a")
+	t = replacetextEx(t, "\\xfb", "\\u044b")
+	t = replacetextEx(t, "\\xfc", "\\u044c")
+	t = replacetextEx(t, "\\xfd", "\\u044d")
+	t = replacetextEx(t, "\\xfe", "\\u044e")
+	t = replacetextEx(t, "&#255;", "\\u044f")
+	t = replacetextEx(t, "&#1103;", "\\u044f")
 	return t
 
 /proc/char_split(t)

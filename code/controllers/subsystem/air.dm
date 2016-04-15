@@ -238,6 +238,7 @@ var/datum/subsystem/air/SSair
 
 /datum/subsystem/air/proc/remove_from_active(turf/open/T)
 	active_turfs -= T
+	T.maptext = null
 	if(istype(T))
 		T.excited = 0
 		if(T.excited_group)
@@ -248,6 +249,7 @@ var/datum/subsystem/air/SSair
 	if(istype(T) && T.air)
 		T.excited = 1
 		active_turfs |= T
+		T.maptext = "ACTIVE"
 		if(blockchanges && T.excited_group)
 			T.excited_group.garbage_collect()
 	else
@@ -269,6 +271,7 @@ var/datum/subsystem/air/SSair
 
 	for(var/thing in turfs_to_init)
 		var/turf/T = thing
+		T.maptext = null
 		active_turfs -= T
 		T.Initalize_Atmos(times_fired)
 

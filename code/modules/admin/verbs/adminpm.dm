@@ -50,6 +50,7 @@
 		return
 	message_admins("[key_name_admin(src)] has started replying to [key_name(C, 0, 0)]'s admin help.")
 	var/msg = input(src,"Message:", "Private message to [key_name(C, 0, 0)]") as text|null
+	msg = sanitize(copytext(msg,1,MAX_MESSAGE_LEN))
 	if (!msg)
 		message_admins("[key_name_admin(src)] has cancelled their reply to [key_name(C, 0, 0)]'s admin help.")
 		return
@@ -79,6 +80,7 @@
 	//get message text, limit it's length.and clean/escape html
 	if(!msg)
 		msg = input(src,"Message:", "Private message to [key_name(C, 0, 0)]") as text|null
+		msg = sanitize(copytext(msg,1,MAX_MESSAGE_LEN))
 
 		if(!msg)
 			return
@@ -92,11 +94,10 @@
 	if (src.handle_spam_prevention(msg,MUTE_ADMINHELP))
 		return
 
-	//clean the message if it's not sent by a high-rank admin
-	if(!check_rights(R_SERVER|R_DEBUG,0))
-		msg = sanitize(copytext(msg,1,MAX_MESSAGE_LEN))
-		if(!msg)
-			return
+	msg = sanitize(copytext(msg,1,MAX_MESSAGE_LEN))
+	msg = html_decode(msg)
+	if(!msg)
+		return
 
 	var/rawmsg = msg
 	if(holder)
@@ -106,12 +107,12 @@
 
 	if(C.holder)
 		if(holder)	//both are admins
-			C << "<font color='red'>Admin PM from-<b>[key_name(src, C, 1)]</b>: [keywordparsedmsg]</font>"
-			src << "<font color='blue'>Admin PM to-<b>[key_name(C, src, 1)]</b>: [keywordparsedmsg]</font>"
+			C << "<font color='red'>ЛС от Админа <b>[key_name(src, C, 1)](<A HREF='?_src_=holder;adminplayerobservefollow=\ref[src.mob]'>FLW</A>)</b>: [keywordparsedmsg]</font>"
+			src << "<font color='blue'>ЛС Админу <b>[key_name(C, src, 1)](<A HREF='?_src_=holder;adminplayerobservefollow=\ref[C.mob]'>FLW</A>)</b>: [keywordparsedmsg]</font>"
 
 		else		//recipient is an admin but sender is not
-			C << "<font color='red'>Reply PM from-<b>[key_name(src, C, 1)]</b>: [keywordparsedmsg]</font>"
-			src << "<font color='blue'>PM to-<b>Admins</b>: [msg]</font>"
+			C << "<font color='red'>Ответное ЛС от <b>[key_name(src, C, 1)](<A HREF='?_src_=holder;adminplayerobservefollow=\ref[src.mob]'>FLW</A>)</b>: [keywordparsedmsg]</font>"
+			src << "<font color='blue'>ЛС <b>Админам</b>: [msg]</font>"
 
 		//play the recieving admin the adminhelp sound (if they have them enabled)
 		if(C.prefs.toggles & SOUND_ADMINHELP)
@@ -119,10 +120,11 @@
 
 	else
 		if(holder)	//sender is an admin but recipient is not. Do BIG RED TEXT
-			C << "<font color='red' size='4'><b>-- Administrator private message --</b></font>"
-			C << "<font color='red'>Admin PM from-<b>[key_name(src, C, 0)]</b>: [msg]</font>"
-			C << "<font color='red'><i>Click on the administrator's name to reply.</i></font>"
-			src << "<font color='blue'>Admin PM to-<b>[key_name(C, src, 1)]</b>: [msg]</font>"
+			C << "<font color='red' size='4'><b>-- Личное сообщение от администратора --</b></font>"
+			C << "<font color='red'><i>Игнорирование ЛС от администраторов караетс&#255; баном</i></font>"
+			C << "<font color='red'>ЛС от Админа <b>[key_name(src, C, 0)]</b>: [msg]</font>"
+			C << "<font color='red'><i>Нажмите на никнейм администратора, чтобы ответить ему.</i></font>"
+			src << "<font color='blue'>ЛС Игроку <b>[key_name(C, src, 1)](<A HREF='?_src_=holder;adminplayerobservefollow=\ref[C.mob]'>FLW</A>)</b>: [msg]</font>"
 
 			//always play non-admin recipients the adminhelp sound
 			C << 'sound/effects/adminhelp.ogg'
@@ -132,7 +134,7 @@
 				spawn()	//so we don't hold the caller proc up
 					var/sender = src
 					var/sendername = key
-					var/reply = input(C, msg,"Admin PM from-[sendername]", "") as text|null		//show message and await a reply
+					var/reply = input(C, msg,"ЛС от Админа [sendername]", "") as text|null		//show message and await a reply
 					if(C && reply)
 						if(sender)
 							C.cmd_admin_pm(sender,reply)										//sender is still about, let's reply to them
@@ -141,7 +143,7 @@
 					return
 
 		else		//neither are admins
-			src << "<font color='red'>Error: Admin-PM: Non-admin to non-admin PM communication is forbidden.</font>"
+			src << "<font color='red'>Ошибка: ЛС админа от игрока к игроку</font>"
 			return
 
 	log_admin("PM: [key_name(src)]->[key_name(C)]: [rawmsg]")
@@ -149,4 +151,4 @@
 	//we don't use message_admins here because the sender/receiver might get it too
 	for(var/client/X in admins)
 		if(X.key!=key && X.key!=C.key)	//check client/X is an admin and isn't the sender or recipient
-			X << "<B><font color='blue'>PM: [key_name(src, X, 0)]-&gt;[key_name(C, X, 0)]:</B> \blue [keywordparsedmsg]</font>" //inform X
+			X << "<B><font color='blue'>PM: [key_name(src, X, 1)](<A HREF='?_src_=holder;adminplayerobservefollow=\ref[src.mob]'>FLW</A>)-&gt;[key_name(C, X, 1)](<A HREF='?_src_=holder;adminplayerobservefollow=\ref[C.mob]'>FLW</A>):</B> \blue [keywordparsedmsg]</font>" //inform X
