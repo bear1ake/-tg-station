@@ -171,15 +171,15 @@
 	var/pressure = environment.return_pressure()
 	cur_tlv = TLV["pressure"]
 	data["environment_data"] += list(list(
-							"name" = "Pressure",
+							"name" = "Давление",
 							"value" = pressure,
-							"unit" = "kPa",
+							"unit" = "кПа",
 							"danger_level" = cur_tlv.get_danger_level(pressure)
 	))
 	var/temperature = environment.temperature
 	cur_tlv = TLV["temperature"]
 	data["environment_data"] += list(list(
-							"name" = "Temperature",
+							"name" = "Температура",
 							"value" = temperature,
 							"unit" = "K ([round(temperature - T0C, 0.1)]C)",
 							"danger_level" = cur_tlv.get_danger_level(temperature)
@@ -206,7 +206,7 @@
 				continue
 			data["vents"] += list(list(
 					"id_tag"	= id_tag,
-					"long_name" = sanitize(long_name),
+					"long_name" = sanitize(replacetext(long_name, "\improper", "")),
 					"power"		= info["power"],
 					"checks"	= info["checks"],
 					"excheck"	= info["checks"]&1,
@@ -223,7 +223,7 @@
 				continue
 			data["scrubbers"] += list(list(
 					"id_tag"		= id_tag,
-					"long_name" 	= sanitize(long_name),
+					"long_name" 	= sanitize(replacetext(long_name, "\improper", "")),
 					"power"			= info["power"],
 					"scrubbing"		= info["scrubbing"],
 					"widenet"		= info["widenet"],
@@ -233,16 +233,16 @@
 				))
 		data["mode"] = mode
 		data["modes"] = list()
-		data["modes"] += list(list("name" = "Filtering - Scrubs out contaminants", 				"mode" = AALARM_MODE_SCRUBBING,		"selected" = mode == AALARM_MODE_SCRUBBING, 	"danger" = 0))
-		data["modes"] += list(list("name" = "Contaminated - Scrubs out ALL contaminants quickly","mode" = AALARM_MODE_CONTAMINATED,	"selected" = mode == AALARM_MODE_CONTAMINATED,	"danger" = 0))
-		data["modes"] += list(list("name" = "Draught - Siphons out air while replacing",		"mode" = AALARM_MODE_VENTING,		"selected" = mode == AALARM_MODE_VENTING,		"danger" = 0))
-		data["modes"] += list(list("name" = "Refill - Triple vent output",						"mode" = AALARM_MODE_REFILL,		"selected" = mode == AALARM_MODE_REFILL,		"danger" = 0))
-		data["modes"] += list(list("name" = "Cycle - Siphons air before replacing", 			"mode" = AALARM_MODE_REPLACEMENT,	"selected" = mode == AALARM_MODE_REPLACEMENT, 	"danger" = 1))
-		data["modes"] += list(list("name" = "Siphon - Siphons air out of the room", 			"mode" = AALARM_MODE_SIPHON,		"selected" = mode == AALARM_MODE_SIPHON, 		"danger" = 1))
-		data["modes"] += list(list("name" = "Panic Siphon - Siphons air out of the room quickly","mode" = AALARM_MODE_PANIC,		"selected" = mode == AALARM_MODE_PANIC, 		"danger" = 1))
-		data["modes"] += list(list("name" = "Off - Shuts off vents and scrubbers", 				"mode" = AALARM_MODE_OFF,			"selected" = mode == AALARM_MODE_OFF, 			"danger" = 0))
+		data["modes"] += list(list("name" = "Фильтрация - Фильтрация углекислого газа", 				"mode" = AALARM_MODE_SCRUBBING,		"selected" = mode == AALARM_MODE_SCRUBBING, 	"danger" = 0))
+		data["modes"] += list(list("name" = "Заражение - Быстрая фильтрация всех загрязнителей","mode" = AALARM_MODE_CONTAMINATED,	"selected" = mode == AALARM_MODE_CONTAMINATED,	"danger" = 0))
+		data["modes"] += list(list("name" = "Сквозняк - Замена воздуха",		"mode" = AALARM_MODE_VENTING,		"selected" = mode == AALARM_MODE_VENTING,		"danger" = 0))
+		data["modes"] += list(list("name" = "Перезаполнение - Утроенный выход вентиляции",						"mode" = AALARM_MODE_REFILL,		"selected" = mode == AALARM_MODE_REFILL,		"danger" = 0))
+		data["modes"] += list(list("name" = "Цикл - Удаление воздуха перед заменой", 			"mode" = AALARM_MODE_REPLACEMENT,	"selected" = mode == AALARM_MODE_REPLACEMENT, 	"danger" = 1))
+		data["modes"] += list(list("name" = "Откачка - Откачка воздуха", 			"mode" = AALARM_MODE_SIPHON,		"selected" = mode == AALARM_MODE_SIPHON, 		"danger" = 1))
+		data["modes"] += list(list("name" = "Аварийная откачка - Быстрое удаление воздуха","mode" = AALARM_MODE_PANIC,		"selected" = mode == AALARM_MODE_PANIC, 		"danger" = 1))
+		data["modes"] += list(list("name" = "Выкл - Отключение всех воздушных приборов", 				"mode" = AALARM_MODE_OFF,			"selected" = mode == AALARM_MODE_OFF, 			"danger" = 0))
 		if(emagged)
-			data["modes"] += list(list("name" = "Flood - Shuts off scrubbers and opens vents",	"mode" = AALARM_MODE_FLOOD,			"selected" = mode == AALARM_MODE_FLOOD, 		"danger" = 1))
+			data["modes"] += list(list("name" = "Переполнение - Отключить очистители и открыть вентиляцию",	"mode" = AALARM_MODE_FLOOD,			"selected" = mode == AALARM_MODE_FLOOD, 		"danger" = 1))
 
 		var/datum/tlv/selected
 		var/list/thresholds = list()
@@ -254,12 +254,6 @@
 		thresholds[thresholds.len]["settings"] += list(list("env" = "pressure", "val" = "max1", "selected" = selected.max1))
 		thresholds[thresholds.len]["settings"] += list(list("env" = "pressure", "val" = "max2", "selected" = selected.max2))
 
-		selected = TLV["temperature"]
-		thresholds += list(list("name" = "Temperature", "settings" = list()))
-		thresholds[thresholds.len]["settings"] += list(list("env" = "temperature", "val" = "min2", "selected" = selected.min2))
-		thresholds[thresholds.len]["settings"] += list(list("env" = "temperature", "val" = "min1", "selected" = selected.min1))
-		thresholds[thresholds.len]["settings"] += list(list("env" = "temperature", "val" = "max1", "selected" = selected.max1))
-		thresholds[thresholds.len]["settings"] += list(list("env" = "temperature", "val" = "max2", "selected" = selected.max2))
 
 		for(var/gas_id in meta_gas_info)
 			if(!(gas_id in TLV)) // We're not interested in this gas, it seems.
